@@ -34,6 +34,5 @@ jobs:
       - name: "Running local action: ${{ github.repository }}"
         uses: ./
         with:
-          with:
-            licenses: |-
-              Apache-2.0
+          licenses: |-
+            Apache-2.0

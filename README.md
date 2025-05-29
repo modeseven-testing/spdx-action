@@ -11,6 +11,8 @@ A Github Action that verifies whether project files include a SPDX license
 header. If any files do not pass the ruleset for their file type, the test
 will fail with some guidance about how to fix it.
 
+## spdx-action
+
 ## Usage
 
 Include the action as part of a workflow that performs a checkout. You'll also
