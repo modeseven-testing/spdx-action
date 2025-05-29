@@ -76,6 +76,7 @@ class Index:
         self.__languages: Dict[str, Language] = {
             'python': Language('#+', shebang=True),
             'ruby': Language('#+', shebang=True),
+            'yaml': Language('#+'),
             'c': Language('//+', ('/\\*', '\\*/')),
             'c++': Language('//+', ('/\\*', '\\*/')),
             'cuda-c': Language('//+', ('/\\*', '\\*/')),

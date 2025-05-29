@@ -84,3 +84,11 @@ jobs:
           debug: true
           licenses: |-
             EPL-1.0
+
+      - name: "Check lftools with the wrong license [Test no_fail]"
+        uses: ./
+        with:
+          path: 'lftools/lftools'
+          no_fail: true
+          licenses: |-
+            Apache-2.0
