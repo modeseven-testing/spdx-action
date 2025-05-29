@@ -52,9 +52,35 @@ jobs:
           repository: 'lfit/releng-lftools'
           path: 'lftools'
 
-      - name: "Running action: ${{ github.repository }}"
+      - name: "Check lftools with the wrong license [Failure Test]"
+        id: failure
+        continue-on-error: true
         uses: ./
         with:
           path: 'lftools/lftools'
           licenses: |-
             Apache-2.0
+
+      # Validate expected failure above
+      - name: 'Error if step above did NOT fail'
+        if: steps.failure.outcome == 'success'
+        shell: bash
+        run: |
+          # Error if step above did NOT fail
+          echo "Error: previous test step did NOT fail ❌"
+          exit 1
+
+      - name: "Check lftools"
+        uses: ./
+        with:
+          path: 'lftools/lftools'
+          licenses: |-
+            EPL-1.0
+
+      - name: "Check lftools [Debugging]"
+        uses: ./
+        with:
+          path: 'lftools/lftools'
+          debug: true
+          licenses: |-
+            EPL-1.0
