@@ -131,6 +131,10 @@ if __name__ == '__main__':
     import sys
     import json
 
+    # Check for debug mode
+    debug_env = os.getenv('INPUT_DEBUG')
+    debug_mode = debug_env is not None and debug_env.lower() == 'true'
+
     # Validate the arguments
     licenses_env = os.getenv('INPUT_LICENSES')
     if licenses_env is None:
@@ -156,10 +160,16 @@ if __name__ == '__main__':
         path, file_license = path_and_license
         # Type check: file_license is Optional[str] from scan()
         if file_license is None or file_license not in licenses:
+            if debug_mode:
+                print(f"❌ {path}")
             if file_license is None:
                 print(f"NO SPDX {path}")
             else:
                 print(f"{file_license:16} {path}")
             rv = 1
+        else:
+            # License check passed
+            if debug_mode:
+                print(f"✅ {path}")
 
     raise SystemExit(rv)

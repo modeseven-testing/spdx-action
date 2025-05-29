@@ -34,6 +34,10 @@ inputs:
     description: 'Do not exit on error, just print a warning'
     required: false
     default: 'false'
+  debug:
+    description: 'Enable debug logging'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -43,7 +47,7 @@ runs:
       shell: bash
       env:
         INPUT_IGNORE_PATHS: "${{ inputs.ignore-paths }}"
-        NO_FAIL: "${{ inputs.no_fail }}"
+        INPUT_DEBUG: "${{ inputs.debug }}"
       run: |
         # Check for SPDX license headers
         if [ "${{ inputs.path }}" != '.' ] && [ -d "${{ inputs.path }}" ]; then
