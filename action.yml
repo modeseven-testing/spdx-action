@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-name: 'SPDX License Header Verification'
+name: 'License Verification'
 description: 'Verify that files include SPDX license headers'
 
 branding:
@@ -34,7 +34,6 @@ inputs:
     description: 'Do not exit on error, just print a warning'
     required: false
     default: 'false'
-    type: boolean
 
 runs:
   using: 'composite'
@@ -45,21 +44,22 @@ runs:
       env:
         INPUT_IGNORE_PATHS: "${{ inputs.ignore-paths }}"
         NO_FAIL: "${{ inputs.no_fail }}"
-      run:
+      run: |
         # Check for SPDX license headers
         if [ "${{ inputs.path }}" != '.' ] && [ -d "${{ inputs.path }}" ]; then
           echo "Changing directory to '${{ inputs.path }}'"
           cd "${{ inputs.path }}" || exit
-        elif[ "${{ inputs.path }}" != '.' ]; then
+        elif [ "${{ inputs.path }}" != '.' ]; then
           echo "Error: specified directory path invalid ❌"
           exit 1
         fi
 
-        # Run the bundled Python scipt
         if [ "${{ inputs.no_fail }}" = 'false' ]; then
           echo "Running SPDX license header verification"
-          echo "${{ inputs.licenses }}" | xargs -d "\n" $GITHUB_ACTION_PATH/verify-spdx-headers.py
+          echo "${{ inputs.licenses }}" | \
+          xargs -d "\n" $GITHUB_ACTION_PATH/verify-spdx-headers.py
         else
           echo "Running SPDX license header verification [ ⚠️ Warnings Only ]"
-          echo "${{ inputs.licenses }}" | xargs -d "\n" $GITHUB_ACTION_PATH/verify-spdx-headers.py || true
+          echo "${{ inputs.licenses }}" | \
+          xargs -d "\n" $GITHUB_ACTION_PATH/verify-spdx-headers.py || true
         fi

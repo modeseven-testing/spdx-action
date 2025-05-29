@@ -4,25 +4,29 @@
 
 import os
 import re
+from typing import Dict, Set, Optional, Tuple, Iterator, Union, List
 
-SLUG = re.compile('[- a-zA-Z0-9.]+')
-SPDX = re.compile(f'SPDX-License-Identifier:\s+({SLUG.pattern})')
+SLUG = re.compile(r'[- a-zA-Z0-9.]+')
+SPDX = re.compile(rf'SPDX-License-Identifier:\s+({SLUG.pattern})')
 
 class Language:
-    def __init__(self, *comments, shebang=False):
+    def __init__(self, *comments: Union[str, Tuple[str, str]], shebang: bool = False) -> None:
         assert(isinstance(shebang, bool))
         self.__shebang = shebang
 
-        self.__match = []
+        self.__match: List[re.Pattern[str]] = []
         for comment in comments:
-            (init, fini) = (comment, '')
+            init: str
+            fini: str = ''
             if isinstance(comment, tuple):
-                (init, fini) = comment
+                init, fini = comment
+            else:
+                init = comment
 
-            pattern = f"^{init}\s*{SPDX.pattern}\s*{fini}\s*$"
+            pattern = f"^{init}\\s*{SPDX.pattern}\\s*{fini}\\s*$"
             self.__match.append(re.compile(pattern))
 
-    def license(self, path):
+    def license(self, path: str) -> Optional[str]:
         "Find the license from the SPDX header."
         with open(path) as f:
             lines = f.readlines()
@@ -35,7 +39,7 @@ class Language:
         return None
 
 class Index:
-    INTERPRETERS = {
+    INTERPRETERS: Dict[str, str] = {
         'python3': 'python',
         'python2': 'python',
         'python': 'python',
@@ -44,7 +48,7 @@ class Index:
         'sh': 'sh',
     }
 
-    EXTENSIONS = {
+    EXTENSIONS: Dict[str, str] = {
         '.py': 'python',
         '.proto': 'protobuf',
         '.rs': 'rust',
@@ -67,9 +71,9 @@ class Index:
         '.sh': 'shell',
     }
 
-    def __init__(self, ignore_paths = {}):
-        self.__ignore_paths = { "./.git" }.union(ignore_paths)
-        self.__languages = {
+    def __init__(self, ignore_paths: Set[str] = set()) -> None:
+        self.__ignore_paths = {"./.git"}.union(ignore_paths)
+        self.__languages: Dict[str, Language] = {
             'python': Language('#+', shebang=True),
             'ruby': Language('#+', shebang=True),
             'c': Language('//+', ('/\\*', '\\*/')),
@@ -82,10 +86,10 @@ class Index:
             'shell': Language('#+', shebang=True),
         }
 
-    def language(self, path):
+    def language(self, path: str) -> Optional[Language]:
         name = self.EXTENSIONS.get(os.path.splitext(path)[1])
         if name is None:
-            interpreter = None
+            interpreter: Optional[str] = None
             with open(path, "rb") as f:
                 if f.read(2) == bytearray('#!'.encode('ascii')):
                     # assume a text file and retry as text file
@@ -94,24 +98,23 @@ class Index:
                             interpreter = t.readline().rstrip().rsplit(os.path.sep)[-1]
                     except:
                         pass
-            name = self.INTERPRETERS.get(interpreter)
-        return self.__languages.get(name)
+            name = self.INTERPRETERS.get(interpreter) if interpreter else None
+        return self.__languages.get(name) if name else None
 
-    def scan(self, root):
-
-        for root, dirs, files in os.walk(root):
+    def scan(self, root: str) -> Iterator[Tuple[str, Optional[str]]]:
+        for root_path, dirs, files in os.walk(root):
             # Ignore the specified directories.
-            for dir in self.__ignore_paths.intersection({os.path.join(root, d) for d in dirs}):
-                dirs.remove(os.path.basename(dir))
+            for dir_path in self.__ignore_paths.intersection({os.path.join(root_path, d) for d in dirs}):
+                dirs.remove(os.path.basename(dir_path))
 
             for file in files:
-                path = os.path.join(root, file)
+                path = os.path.join(root_path, file)
 
                 # If the file is in the ignore list, skip it.
                 if path in self.__ignore_paths:
                     continue
                 # If the file is a symlink, don't bother
-                if os.path.islink( path ):
+                if os.path.islink(path):
                     continue
                 # If the file is empty skip.
                 if os.path.getsize(path) == 0:
@@ -129,30 +132,34 @@ if __name__ == '__main__':
     import json
 
     # Validate the arguments
-    licenses = os.getenv('INPUT_LICENSES')
-    if licenses is None:
+    licenses_env = os.getenv('INPUT_LICENSES')
+    if licenses_env is None:
         licenses = sys.argv[1:]
     else:
-        licenses = json.loads(licenses)
+        licenses = json.loads(licenses_env)
     for license in licenses:
         if not SLUG.match(license):
             print("Invalid license '%s'!" % license)
             raise SystemExit(1)
 
-    ignore_paths = os.getenv('INPUT_IGNORE_PATHS')
-    if ignore_paths is not None:
-        ignore_paths = {"./"+p.strip() for p in ignore_paths.split("\n")}
+    ignore_paths_env = os.getenv('INPUT_IGNORE_PATHS')
+    if ignore_paths_env is not None:
+        ignore_paths = {"./"+p.strip() for p in ignore_paths_env.split("\n")}
     else:
-        ignore_paths = {}
+        ignore_paths = set()
 
     rv = 0
-    index = Index(ignore_paths = ignore_paths)
-    for (path, license) in index.scan("."):
-        if license not in licenses:
-            if license == None:
+    index = Index(ignore_paths=ignore_paths)
+    for path_and_license in index.scan("."):
+        path: str
+        file_license: Optional[str]
+        path, file_license = path_and_license
+        # Type check: file_license is Optional[str] from scan()
+        if file_license is None or file_license not in licenses:
+            if file_license is None:
                 print(f"NO SPDX {path}")
             else:
-                print(f"{license:16} {path}")
+                print(f"{file_license:16} {path}")
             rv = 1
 
     raise SystemExit(rv)

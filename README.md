@@ -49,14 +49,14 @@ This script basically performs two actions:
 1. It identifies the source code language for each file.
 2. It validates the SPDX header using the semantics for the language.
 
-If this script cannot identify the language for a file, it is skipped.
-Likewise, if the language of the file is known but it has no SPDX semantics
-defined, it is skipped.
+If the action cannot identify the language of a file, or when there are no SPDX
+comment semantics supported by that file type, processing will move on without
+error.
 
-We identify the source code of a language using two strategies.
+We identify the source code of a language using two strategies:
 
-1. We map the extension to a known language.
-2. We evaluate a shebang line, if present.
+1. Map the extension to a known language
+2. Check the shebang line, if present
 
 ## Adding Support for New Languages
 
