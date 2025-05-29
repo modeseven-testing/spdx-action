@@ -101,7 +101,7 @@ class Index:
             name = self.INTERPRETERS.get(interpreter) if interpreter else None
         return self.__languages.get(name) if name else None
 
-    def scan(self, root: str) -> Iterator[Tuple[str, Optional[str]]]:
+    def scan(self, root: str) -> Iterator[Tuple[str, Optional[str], str]]:
         for root_path, dirs, files in os.walk(root):
             # Ignore the specified directories.
             for dir_path in self.__ignore_paths.intersection({os.path.join(root_path, d) for d in dirs}):
@@ -119,13 +119,17 @@ class Index:
                 # If the file is empty skip.
                 if os.path.getsize(path) == 0:
                     continue
+
                 # Find the language of the file.
                 language = self.language(path)
                 if language is None:
+                    # File type not supported
+                    yield (path, None, "skipped")
                     continue
 
                 # Parse the SPDX header for the language.
-                yield (path, language.license(path))
+                license_result = language.license(path)
+                yield (path, license_result, "checked")
 
 if __name__ == '__main__':
     import sys
@@ -157,19 +161,19 @@ if __name__ == '__main__':
     for path_and_license in index.scan("."):
         path: str
         file_license: Optional[str]
-        path, file_license = path_and_license
-        # Type check: file_license is Optional[str] from scan()
-        if file_license is None or file_license not in licenses:
+        status: str
+        path, file_license, status = path_and_license
+
+        if status == "skipped":
             if debug_mode:
-                print(f"❌ {path}")
-            if file_license is None:
-                print(f"NO SPDX {path}")
-            else:
+                print(f"⏩ {path}")
+        elif file_license is None or file_license not in licenses:
+            print(f"❌ {path}")
+            if file_license is not None:
                 print(f"{file_license:16} {path}")
             rv = 1
         else:
             # License check passed
-            if debug_mode:
-                print(f"✅ {path}")
+            print(f"✅ {path}")
 
     raise SystemExit(rv)
