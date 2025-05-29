@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # SPDX License Header Verification
 
-Forked from: https://github.com/enarx/spdx
+Forked from: <https://github.com/enarx/spdx>
 
 A Github Action that verifies whether project files include a SPDX license
 header. If any files do not pass the ruleset for their file type, the test
