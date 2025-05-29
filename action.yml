@@ -1,0 +1,65 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2025 The Linux Foundation
+
+name: 'SPDX License Header Verification'
+description: 'Verify that files include SPDX license headers'
+
+branding:
+  icon: zap
+  color: gray-dark
+
+inputs:
+  path:
+    description: 'File system path to the project/repository directory'
+    required: false
+    default: '.'
+  licenses:
+    description: >
+      A newline-separated list of all accepted licenses. For example:
+      licenses: |-
+        Apache-2.0
+        Apache-2.0 WITH LLVM-exception
+    required: true
+    default: ''
+  ignore-paths:
+    description: >
+      A newline-separated list of any paths to ignore. For example:
+      ignore-paths: |-
+        src/generated/
+        src/ignore-file.md
+    required: false
+    default: ''
+  no_fail:
+    description: 'Do not exit on error, just print a warning'
+    required: false
+    default: 'false'
+    type: boolean
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Check for SPDX license headers'
+      id: verify
+      shell: bash
+      env:
+        INPUT_IGNORE_PATHS: "${{ inputs.ignore-paths }}"
+        NO_FAIL: "${{ inputs.no_fail }}"
+      run:
+        # Check for SPDX license headers
+        if [ "${{ inputs.path }}" != '.' ] && [ -d "${{ inputs.path }}" ]; then
+          echo "Changing directory to '${{ inputs.path }}'"
+          cd "${{ inputs.path }}" || exit
+        elif[ "${{ inputs.path }}" != '.' ]; then
+          echo "Error: specified directory path invalid ❌"
+          exit 1
+        fi
+
+        # Run the bundled Python scipt
+        if [ "${{ inputs.no_fail }}" = 'false' ]; then
+          echo "Running SPDX license header verification"
+          echo "${{ inputs.licenses }}" | xargs -d "\n" $GITHUB_ACTION_PATH/verify-spdx-headers.py
+        else
+          echo "Running SPDX license header verification [ ⚠️ Warnings Only ]"
+          echo "${{ inputs.licenses }}" | xargs -d "\n" $GITHUB_ACTION_PATH/verify-spdx-headers.py || true
+        fi
