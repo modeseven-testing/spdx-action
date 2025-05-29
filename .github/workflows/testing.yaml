@@ -37,3 +37,10 @@ jobs:
         with:
           licenses: |-
             Apache-2.0
+
+      - name: "Running action: ${{ github.repository }}"
+        uses: ./
+        with:
+          debug: true
+          licenses: |-
+            Apache-2.0
