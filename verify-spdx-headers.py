@@ -168,9 +168,8 @@ if __name__ == '__main__':
             if debug_mode:
                 print(f"⏩ {path}")
         elif file_license is None or file_license not in licenses:
-            print(f"❌ {path}")
-            if file_license is not None:
-                print(f"{file_license:16} {path}")
+            license_display = file_license if file_license is not None else "NO LICENSE"
+            print(f"❌ {license_display:<16} {path}")
             rv = 1
         else:
             # License check passed
